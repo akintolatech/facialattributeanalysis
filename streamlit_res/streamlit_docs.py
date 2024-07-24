@@ -8,7 +8,7 @@ from streamlit_webrtc import webrtc_streamer
 import av
 import cv2
 
-
+# without flags
 # def callback(frame):
 #     img = frame.to_ndarray(format="bgr24")
 #     img = cv2.cvtColor(cv2.Canny(img, 100, 200), cv2.COLOR_GRAY2BGR)
