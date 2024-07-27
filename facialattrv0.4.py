@@ -4,6 +4,7 @@
         More Performance optimization
         Export Analysis Data in both Spanish and English
         Export Analysis Chart in Excel
+        Combined Combobox to change the language of the Application
     All rights reserved Esteban Morales and Akintola Technologies @ 2024
 """
 # IO
