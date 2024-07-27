@@ -63,9 +63,9 @@ translations = {
     "surprise": {"English": "Surprise", "Spanish": "Sorpresa"},
     "Upload Video File": {"English": "Upload Video File", "Spanish": "Subir archivo de video"},
     "Start Live Feed": {"English": "Start Live Feed", "Spanish": "Iniciar transmisión en vivo"},
-    "Live Time:": {"English": "Live Time:", "Spanish": "Tiempo en vivo:"},
-    "Total Emotions Detected:": {"English": "Total Emotions Detected:", "Spanish": "Emociones totales detectadas:"},
-    "Most detected Emotion:": {"English": "Most detected Emotion:", "Spanish": "Emoción más detectada:"},
+    "Live Time": {"English": "Live Time:", "Spanish": "Tiempo en vivo:"},
+    "Total Emotions Detected": {"English": "Total Emotions Detected:", "Spanish": "Emociones totales detectadas:"},
+    "Most detected Emotion": {"English": "Most detected Emotion:", "Spanish": "Emoción más detectada:"},
     "Language Preference": {"English": "Language Preference", "Spanish": "Preferencia de idioma"},
     "Export Statistics": {"English": "Export Statistics", "Spanish": "Exportar estadísticas"},
     "Facial Attribute Analysis Software v.0.4": {"English": "Facial Attribute Analysis Software v.0.4",
@@ -82,9 +82,9 @@ def update_ui_text(language):
     root.title(translations["Facial Attribute Analysis Software v.0.4"][language])
     upload_btn.configure(text=translations["Upload Video File"][language])
     save_feed.configure(text=translations["Start Live Feed"][language])
-    total_feed_time.config(text=f"{translations['Live Time:'][language]} 00:00")
-    total_detected_emotions.config(text=f"{translations['Total Emotions Detected:'][language]} 0")
-    max_emotion.config(text=f"{translations['Most detected Emotion:'][language]} Nil")
+    total_feed_time.config(text=f"{translations['Live Time'][language]} 00:00")
+    total_detected_emotions.config(text=f"{translations['Total Emotions Detected'][language]} 0")
+    max_emotion.config(text=f"{translations['Most detected Emotion'][language]} Nil")
     app_info.config(text=translations["Language Preference"][language])
     export_stats_btn.configure(text=translations["Export Statistics"][language])
 
@@ -174,6 +174,9 @@ def analyze_video(source):
 
     # start live time
     start_time = time.time()
+
+    # language translation
+    language_reference = language_str.get()
 
     # Get the absolute path to the Haar cascade file to be used during packaging
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -294,7 +297,8 @@ def analyze_video(source):
         elapsed_minutes = int(elapsed_time // 60)
         elapsed_seconds = int(elapsed_time % 60)
         current_time = f"{elapsed_minutes:02d}:{elapsed_seconds:02d}"
-        total_feed_time.config(text=f"Live Time: {elapsed_minutes:02d}:{elapsed_seconds:02d}")
+        total_feed_time.config(
+            text=f"{translations["Live Time:"][language_reference]}: {elapsed_minutes:02d}:{elapsed_seconds:02d}")
 
         # Check for key press
         key = cv2.waitKey(1)
@@ -323,14 +327,27 @@ def analyze_webcam():
 
 
 def update_chart():
+    # # update statistical variables
+    # total_detected_emotions_variable = sum(emotion_counts.values())
+    # total_detected_emotions.config(text=f"Total Emotions Detected: {total_detected_emotions_variable}")
+    #
+    # # most detected emotion
+    # if total_detected_emotions_variable > 0:
+    #     max_emotion_variable = max(emotion_counts, key=emotion_counts.get)
+    #     max_emotion.config(text=f"Most Detected Emotion: {max_emotion_variable}")
+
+    # language translation
+    language_reference = language_str.get()
+
     # update statistical variables
     total_detected_emotions_variable = sum(emotion_counts.values())
-    total_detected_emotions.config(text=f"Total Emotions Detected: {total_detected_emotions_variable}")
+    total_detected_emotions.config(
+        text=f"{translations["Total Emotions Detected"][language_reference]}: {total_detected_emotions_variable}")
 
     # most detected emotion
     if total_detected_emotions_variable > 0:
         max_emotion_variable = max(emotion_counts, key=emotion_counts.get)
-        max_emotion.config(text=f"Most Detected Emotion: {max_emotion_variable}")
+        max_emotion.config(text=f"{translations["Most Detected Emotion"][language_reference]}: {max_emotion_variable}")
 
 
 def draw_bar_chart(canvas, data, language, width=660, height=450, padding=40):
@@ -392,6 +409,7 @@ upload_btn = customtkinter.CTkButton(
     height=40,
     text="Upload Video File",
     fg_color=sec_color,
+    hover_color="#FEFEFF",
     text_color="black",
     command=upload_video
 )
@@ -403,7 +421,8 @@ save_feed = customtkinter.CTkButton(
     width=320,
     height=40,
     text="Start Live Feed",
-    fg_color=pry_color,
+    fg_color="#0700AE",
+    hover_color=pry_color,
     command=analyze_webcam
 )
 
@@ -455,8 +474,6 @@ app_info = Label(
 )
 app_info.place(x=19, y=520)
 
-
-
 export_stats_btn = customtkinter.CTkButton(
     master=right_frame,
     width=220,
@@ -468,7 +485,6 @@ export_stats_btn = customtkinter.CTkButton(
 )
 
 export_stats_btn.place(x=460, y=542)
-
 
 # Combobox
 language_str = tk.StringVar()
