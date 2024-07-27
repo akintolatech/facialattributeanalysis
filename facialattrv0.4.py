@@ -1,9 +1,9 @@
 """
-    Facial Attribute Analysis Software v0.4
+    Facial Attribute Analysis Software v0.5
     What's New
         More Performance optimization
-        Export Analysis Data in Document and Excel
-        Convert Chart Labels to Spanish
+        Export Analysis Data in both Spanish and English
+        Export Analysis Chart in Excel
     All rights reserved Esteban Morales and Akintola Technologies @ 2024
 """
 # IO
@@ -50,6 +50,50 @@ emotion_translations = {
     "sad": "Triste",
     "surprise": "Sorpresa"
 }
+
+# UI text translations
+translations = {
+    "neutral": {"English": "Neutral", "Spanish": "Neutral"},
+    "angry": {"English": "Angry", "Spanish": "Enojado"},
+    "fear": {"English": "Fear", "Spanish": "Miedo"},
+    "disgust": {"English": "Disgust", "Spanish": "Asco"},
+    "happy": {"English": "Happy", "Spanish": "Feliz"},
+    "sad": {"English": "Sad", "Spanish": "Triste"},
+    "surprise": {"English": "Surprise", "Spanish": "Sorpresa"},
+    "Upload Video File": {"English": "Upload Video File", "Spanish": "Subir archivo de video"},
+    "Start Live Feed": {"English": "Start Live Feed", "Spanish": "Iniciar transmisión en vivo"},
+    "Live Time:": {"English": "Live Time:", "Spanish": "Tiempo en vivo:"},
+    "Total Emotions Detected:": {"English": "Total Emotions Detected:", "Spanish": "Emociones totales detectadas:"},
+    "Most detected Emotion:": {"English": "Most detected Emotion:", "Spanish": "Emoción más detectada:"},
+    "Language Preference": {"English": "Language Preference", "Spanish": "Preferencia de idioma"},
+    "Export Statistics": {"English": "Export Statistics", "Spanish": "Exportar estadísticas"},
+    "Facial Attribute Analysis Software v.0.4": {"English": "Facial Attribute Analysis Software v.0.4",
+                                                 "Spanish": "Software de análisis de atributos faciales v.0.4"},
+    "Error": {"English": "Error", "Spanish": "Error"},
+    "Failed to access webcam": {"English": "Failed to access webcam", "Spanish": "No se pudo acceder a la cámara web"},
+    "Analysis exported in Docx and Xslx!": {"English": "Analysis exported in Docx and Xslx!",
+                                            "Spanish": "¡Análisis exportado en Docx y Xslx!"},
+
+}
+
+
+def update_ui_text(language):
+    root.title(translations["Facial Attribute Analysis Software v.0.4"][language])
+    upload_btn.configure(text=translations["Upload Video File"][language])
+    save_feed.configure(text=translations["Start Live Feed"][language])
+    total_feed_time.config(text=f"{translations['Live Time:'][language]} 00:00")
+    total_detected_emotions.config(text=f"{translations['Total Emotions Detected:'][language]} 0")
+    max_emotion.config(text=f"{translations['Most detected Emotion:'][language]} Nil")
+    app_info.config(text=translations["Language Preference"][language])
+    export_stats_btn.configure(text=translations["Export Statistics"][language])
+
+
+# Combobox change event handler
+def on_language_change(event):
+    selected_language = language_str.get()
+    update_ui_text(selected_language)
+    draw_bar_chart(chart_canvas, emotion_counts, selected_language)
+
 
 # Initialize emotion count dictionary
 emotion_counts = {
@@ -188,7 +232,7 @@ def analyze_video(source):
                     analyze = DeepFace.analyze(face_region, actions=['emotion'])
 
                     # language translation
-                    language_reference = language.get()
+                    language_reference = language_str.get()
 
                     # Check if emotions are detected
                     if 'dominant_emotion' in analyze[0]:
@@ -207,7 +251,7 @@ def analyze_video(source):
                     update_chart()
 
                     # Draw the bar chart with the translated labels
-                    draw_bar_chart(chart_canvas, {emotion_translations.get(k, k): v for k, v in emotion_counts.items()})
+                    draw_bar_chart(chart_canvas, emotion_counts, language_reference)
 
                 except:
                     pass
@@ -288,9 +332,9 @@ def update_chart():
         max_emotion.config(text=f"Most Detected Emotion: {max_emotion_variable}")
 
 
-def draw_bar_chart(canvas, data, width=660, height=450, padding=40):
+def draw_bar_chart(canvas, data, language, width=660, height=450, padding=40):
     # language display option
-    language_reference = language.get()
+    language_reference = language_str.get()
 
     canvas.delete("all")  # Clear previous drawings
 
@@ -308,7 +352,8 @@ def draw_bar_chart(canvas, data, width=660, height=450, padding=40):
         x1 = x0 + bar_width
         y1 = height - padding
 
-        translated_emotion = emotion_translations.get(emotion, emotion)  # Translate emotion label
+        # translated_emotion = emotion_translations.get(emotion, emotion)  # Translate emotion label
+        translated_emotion = translations[emotion][language]  # Translate emotion label
 
         canvas.create_rectangle(x0, y0, x1, y1, fill=pry_color)
         canvas.create_text(x0 + bar_width / 2, y1 + 10, text=translated_emotion, anchor=tk.N)
@@ -409,17 +454,7 @@ app_info = Label(
 )
 app_info.place(x=19, y=520)
 
-language = tk.StringVar()
-language_ref = ttk.Combobox(
-    master=right_frame,
-    width=12,
-    textvariable=language,
-    state="readonly"
-)
 
-language_ref.place(x=20, y=540)
-language_ref["values"] = "English Spanish"
-language_ref.current(0)
 
 export_stats_btn = customtkinter.CTkButton(
     master=right_frame,
@@ -433,7 +468,27 @@ export_stats_btn = customtkinter.CTkButton(
 
 export_stats_btn.place(x=460, y=542)
 
+
+# Combobox
+language_str = tk.StringVar()
+language_ref = ttk.Combobox(
+    master=right_frame,
+    width=12,
+    textvariable=language_str,
+    state="readonly"
+)
+
+language_ref.place(x=20, y=540)
+language_ref["values"] = "English Spanish"
+language_ref.current(0)
+
+# Bind the combobox change event to the handler
+language_ref.bind("<<ComboboxSelected>>", on_language_change)
+
+# Set default language to English
+update_ui_text("English")
+
 # Draw the bar chart with the generated emotion data
-draw_bar_chart(chart_canvas, emotion_counts)
+draw_bar_chart(chart_canvas, emotion_counts, "English")
 
 root.mainloop()
