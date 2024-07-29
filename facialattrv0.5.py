@@ -27,6 +27,8 @@ import docx
 from docx import Document
 import openpyxl
 from openpyxl import Workbook
+# from openpyxl.drawing.image import Image as ExcelImage
+from openpyxl.chart import BarChart, Reference
 
 # # Suppress TensorFlow logs
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # Suppress TensorFlow warnings and info messages
@@ -40,6 +42,17 @@ from openpyxl import Workbook
 # Flags
 # flag to indicate of the picture frame is saved
 frame_saved = False
+
+# Initialize emotion count dictionary
+emotion_counts = {
+    "neutral": 0,
+    "angry": 0,
+    "fear": 0,
+    "disgust": 0,
+    "happy": 0,
+    "sad": 0,
+    "surprise": 0
+}
 
 # Dictionary for emotion translations
 emotion_translations = {
@@ -63,13 +76,13 @@ translations = {
     "surprise": {"English": "Surprise", "Spanish": "Sorpresa"},
     "Upload Video File": {"English": "Upload Video File", "Spanish": "Subir archivo de video"},
     "Start Live Feed": {"English": "Start Live Feed", "Spanish": "Iniciar transmisión en vivo"},
-    "Live Time": {"English": "Live Time:", "Spanish": "Tiempo en vivo:"},
-    "Total Emotions Detected": {"English": "Total Emotions Detected:", "Spanish": "Emociones totales detectadas:"},
-    "Most detected Emotion": {"English": "Most detected Emotion:", "Spanish": "Emoción más detectada:"},
+    "Live Time": {"English": "Live Time", "Spanish": "Tiempo en vivo"},
+    "Total Emotions Detected": {"English": "Total Emotions Detected", "Spanish": "Emociones totales detectadas"},
+    "Most detected Emotion": {"English": "Most detected Emotion", "Spanish": "Emoción más detectada"},
     "Language Preference": {"English": "Language Preference", "Spanish": "Preferencia de idioma"},
     "Export Statistics": {"English": "Export Statistics", "Spanish": "Exportar estadísticas"},
-    "Facial Attribute Analysis Software v.0.4": {"English": "Facial Attribute Analysis Software v.0.4",
-                                                 "Spanish": "Software de análisis de atributos faciales v.0.4"},
+    "Facial Attribute Analysis Software v.0.5": {"English": "Facial Attribute Analysis Software v.0.5",
+                                                 "Spanish": "Software de análisis de atributos faciales v.0.5"},
     "Error": {"English": "Error", "Spanish": "Error"},
     "Failed to access webcam": {"English": "Failed to access webcam", "Spanish": "No se pudo acceder a la cámara web"},
     "Analysis exported in Docx and Xslx!": {"English": "Analysis exported in Docx and Xslx!",
@@ -79,14 +92,16 @@ translations = {
 
 
 def update_ui_text(language):
-    root.title(translations["Facial Attribute Analysis Software v.0.4"][language])
+    root.title(translations["Facial Attribute Analysis Software v.0.5"][language])
     upload_btn.configure(text=translations["Upload Video File"][language])
     save_feed.configure(text=translations["Start Live Feed"][language])
+
+    app_info.config(text=translations["Language Preference"][language])
+    export_stats_btn.configure(text=translations["Export Statistics"][language])
+
     total_feed_time.config(text=f"{translations['Live Time'][language]} 00:00")
     total_detected_emotions.config(text=f"{translations['Total Emotions Detected'][language]} 0")
     max_emotion.config(text=f"{translations['Most detected Emotion'][language]} Nil")
-    app_info.config(text=translations["Language Preference"][language])
-    export_stats_btn.configure(text=translations["Export Statistics"][language])
 
 
 # Combobox change event handler
@@ -95,17 +110,6 @@ def on_language_change(event):
     update_ui_text(selected_language)
     draw_bar_chart(chart_canvas, emotion_counts, selected_language)
 
-
-# Initialize emotion count dictionary
-emotion_counts = {
-    "neutral": 0,
-    "angry": 0,
-    "fear": 0,
-    "disgust": 0,
-    "happy": 0,
-    "sad": 0,
-    "surprise": 0
-}
 
 current_time = "Nil"
 
@@ -119,17 +123,30 @@ def export_data():
     total_emotions = sum(analytics_data.values())
     most_detected_emotion = max(analytics_data, key=analytics_data.get)
 
-    # Export docx report
+    # Export docx report in English and Spanish
+    doc2 = Document()
     doc = Document()
+
+    doc2.add_heading(f"Informe de análisis de atributos faciales")
     doc.add_heading(f"Facial Attribute Analysis Report")
+
+    doc2.add_picture("output/analysed_frame.jpg", width=docx.shared.Inches(4))
     doc.add_picture("output/analysed_frame.jpg", width=docx.shared.Inches(4))
+
+    doc2.add_paragraph(f"Duración del análisis de atributos faciales: {current_time}")
+    doc2.add_paragraph(f"Total de emociones detectadas durante el análisis: {total_emotions}")
+    doc2.add_paragraph(f"Emoción más detectada durante el análisis: {most_detected_emotion}")
+
     doc.add_paragraph(f"Duration of Facial attribute analysis {current_time}")
     doc.add_paragraph(f"Total emotions detected during analysis: {total_emotions}")
     doc.add_paragraph(f"Most detected emotion during analysis: {most_detected_emotion}")
 
     # Add a table to the document
     table = doc.add_table(rows=1, cols=3)
+    spanish_table = doc2.add_table(rows=1, cols=3)
+
     table.style = 'Table Grid'
+    spanish_table.style = "Table Grid"
 
     # serial count
     serial = 1
@@ -139,6 +156,12 @@ def export_data():
     hdr_cells[0].text = 'Serial'
     hdr_cells[1].text = 'Emotion'
     hdr_cells[2].text = 'Count'
+
+    # Add document row for spanish
+    shdr_cells = spanish_table.rows[0].cells
+    shdr_cells[0].text = 'De serie'
+    shdr_cells[1].text = 'Emoción'
+    shdr_cells[2].text = 'Contar'
 
     # Create a new Excel workbook and select the active worksheet
     wb = Workbook()
@@ -150,15 +173,37 @@ def export_data():
 
     # Add data rows
     for emotion, count in analytics_data.items():
+
+        srow_cells = spanish_table.add_row().cells
+        srow_cells[0].text = str(serial)
+        srow_cells[1].text = emotion
+        srow_cells[2].text = str(count)
+
         row_cells = table.add_row().cells
         row_cells[0].text = str(serial)
         row_cells[1].text = emotion
         row_cells[2].text = str(count)
-        ws.append([str(serial), emotion, str(count)])
 
-        serial = serial + 1
+        # for excel
+        ws.append([serial, emotion, count])
+        serial += 1
 
-    # save the document
+    # Add data for the chart in Excel
+    chart = BarChart()
+    chart.title = "Emotion Counts"
+    chart.y_axis.title = 'Count'
+    chart.x_axis.title = 'Emotion'
+
+    data = Reference(ws, min_col=3, min_row=3, max_row=3 + len(analytics_data) - 1)
+    categories = Reference(ws, min_col=2, min_row=4, max_row=3 + len(analytics_data))
+
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(categories)
+    chart.shape = 4
+    ws.add_chart(chart, "E5")
+
+    # Save the document
+    doc2.save("output/datos-analíticos.docx")
     doc.save("output/analytics-data.docx")
 
     # Save the sheet
@@ -168,15 +213,11 @@ def export_data():
     messagebox.showinfo("Export Data", "Analysis exported in Docx and Xslx!")
 
 
-# functional
 def analyze_video(source):
     global emotion_counts, current_time, frame_saved
 
     # start live time
     start_time = time.time()
-
-    # language translation
-    language_reference = language_str.get()
 
     # Get the absolute path to the Haar cascade file to be used during packaging
     current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -207,6 +248,9 @@ def analyze_video(source):
         # Read a frame from the webcam
         ret, frame = cap.read()
 
+        # language translation
+        language_reference = language_str.get()
+
         # Check if the frame is read successfully
         if not ret:
             break
@@ -235,27 +279,23 @@ def analyze_video(source):
                     # Analyze emotions for the face region
                     analyze = DeepFace.analyze(face_region, actions=['emotion'])
 
-                    # language translation
-                    language_reference = language_str.get()
-
                     # Check if emotions are detected
                     if 'dominant_emotion' in analyze[0]:
+
                         # Get the dominant emotion
                         dominant_emotion = analyze[0]['dominant_emotion']
+
                         # Update emotion count
                         emotion_counts[dominant_emotion] += 1
 
                         if language_reference == "Spanish":
                             dominant_emotion = emotion_translations.get(dominant_emotion, dominant_emotion)
 
-                            # Display the dominant emotion text
+                        # Display the dominant emotion text
                         cv2.putText(frame, dominant_emotion, (x, y), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 26), 3)
 
-                    # Update the chart
-                    update_chart()
-
-                    # Draw the bar chart with the translated labels
-                    draw_bar_chart(chart_canvas, emotion_counts, language_reference)
+                    # # Update the chart
+                    # update_chart()
 
                 except:
                     pass
@@ -292,13 +332,26 @@ def analyze_video(source):
         # Refresh the video feed label
         video_feed.update()
 
+        # Draw the bar chart with the translated labels
+        draw_bar_chart(chart_canvas, emotion_counts, language_reference)
+
         # Calculate the elapsed time
         elapsed_time = time.time() - start_time
         elapsed_minutes = int(elapsed_time // 60)
         elapsed_seconds = int(elapsed_time % 60)
         current_time = f"{elapsed_minutes:02d}:{elapsed_seconds:02d}"
         total_feed_time.config(
-            text=f"{translations["Live Time:"][language_reference]}: {elapsed_minutes:02d}:{elapsed_seconds:02d}")
+            text=f"{translations["Live Time"][language_reference]}: {elapsed_minutes:02d}:{elapsed_seconds:02d}")
+
+        total_detected_emotions_variable = sum(emotion_counts.values())
+        total_detected_emotions.config(
+            text=f"{translations["Total Emotions Detected"][language_reference]}: {total_detected_emotions_variable}")
+
+        # most detected emotion
+        if total_detected_emotions_variable > 0:
+            max_emotion_variable = max(emotion_counts, key=emotion_counts.get)
+            max_emotion.config(
+                text=f"{translations["Most detected Emotion"][language_reference]}: {max_emotion_variable}")
 
         # Check for key press
         key = cv2.waitKey(1)
@@ -326,34 +379,7 @@ def analyze_webcam():
     analyze_video("webcam")
 
 
-def update_chart():
-    # # update statistical variables
-    # total_detected_emotions_variable = sum(emotion_counts.values())
-    # total_detected_emotions.config(text=f"Total Emotions Detected: {total_detected_emotions_variable}")
-    #
-    # # most detected emotion
-    # if total_detected_emotions_variable > 0:
-    #     max_emotion_variable = max(emotion_counts, key=emotion_counts.get)
-    #     max_emotion.config(text=f"Most Detected Emotion: {max_emotion_variable}")
-
-    # language translation
-    language_reference = language_str.get()
-
-    # update statistical variables
-    total_detected_emotions_variable = sum(emotion_counts.values())
-    total_detected_emotions.config(
-        text=f"{translations["Total Emotions Detected"][language_reference]}: {total_detected_emotions_variable}")
-
-    # most detected emotion
-    if total_detected_emotions_variable > 0:
-        max_emotion_variable = max(emotion_counts, key=emotion_counts.get)
-        max_emotion.config(text=f"{translations["Most Detected Emotion"][language_reference]}: {max_emotion_variable}")
-
-
 def draw_bar_chart(canvas, data, language, width=660, height=450, padding=40):
-    # language display option
-    language_reference = language_str.get()
-
     canvas.delete("all")  # Clear previous drawings
 
     max_value = max(data.values())
@@ -370,17 +396,18 @@ def draw_bar_chart(canvas, data, language, width=660, height=450, padding=40):
         x1 = x0 + bar_width
         y1 = height - padding
 
-        # translated_emotion = emotion_translations.get(emotion, emotion)  # Translate emotion label
         translated_emotion = translations[emotion][language]  # Translate emotion label
 
         canvas.create_rectangle(x0, y0, x1, y1, fill=pry_color)
         canvas.create_text(x0 + bar_width / 2, y1 + 10, text=translated_emotion, anchor=tk.N)
         canvas.create_text(x0 + bar_width / 2, y0 - 10, text=str(count), anchor=tk.S)
 
+    canvas.update()  # Refresh the canvas to display the updated bars
+
 
 # UI Implementation
 root = tk.Tk()
-root.title("Facial Attribute Analysis Software v.0.4")
+root.title("Facial Attribute Analysis Software v.0.5")
 root.iconbitmap("fr.ico")
 root.geometry("1080x600")
 root.resizable(0, 0)
@@ -389,8 +416,8 @@ root.resizable(0, 0)
 frame_width = 360
 frame_height = 600
 
-# UI variables
-pry_color = "#514AF5"
+# UI variables #0700AE #514AF5
+pry_color = "#0700AE"
 sec_color = "#DDDCF2"
 _2nd_bgcolor = "white"
 
