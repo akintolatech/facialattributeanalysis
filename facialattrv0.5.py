@@ -87,7 +87,11 @@ translations = {
     "Failed to access webcam": {"English": "Failed to access webcam", "Spanish": "No se pudo acceder a la cámara web"},
     "Analysis exported in Docx and Xslx!": {"English": "Analysis exported in Docx and Xslx!",
                                             "Spanish": "¡Análisis exportado en Docx y Xslx!"},
-
+    "Serial": {"English": "Serial", "Spanish": "De serie"},
+    "Emotion": {"English": "Emotion", "Spanish": "Emotionales"},
+    "Count": {"English": "Count", "Spanish": "Countas"},
+    "Emotion Counts": {"English": "Emotion Counts", "Spanish": "Emotionales Countas"},
+    "Export Data": {"English": "Export Data", "Spanish": "Export Dataois"},
 }
 
 
@@ -123,94 +127,75 @@ def export_data():
     total_emotions = sum(analytics_data.values())
     most_detected_emotion = max(analytics_data, key=analytics_data.get)
 
-    # Export docx report in English and Spanish
-    doc2 = Document()
-    doc = Document()
+    # Create and populate the documents and Excel sheets
+    for language in ["English", "Spanish"]:
+        doc = Document()
+        doc.add_heading(translations["Facial Attribute Analysis Software v.0.5"][language])
+        doc.add_picture("output/analysed_frame.jpg", width=docx.shared.Inches(4))
 
-    doc2.add_heading(f"Informe de análisis de atributos faciales")
-    doc.add_heading(f"Facial Attribute Analysis Report")
+        duration_text = translations["Live Time"][language] + ": " + current_time
+        total_emotions_text = translations["Total Emotions Detected"][language] + ": " + str(total_emotions)
+        most_detected_emotion_text = translations["Most detected Emotion"][language] + ": " + translations[most_detected_emotion][language]
 
-    doc2.add_picture("output/analysed_frame.jpg", width=docx.shared.Inches(4))
-    doc.add_picture("output/analysed_frame.jpg", width=docx.shared.Inches(4))
+        doc.add_paragraph(duration_text)
+        doc.add_paragraph(total_emotions_text)
+        doc.add_paragraph(most_detected_emotion_text)
 
-    doc2.add_paragraph(f"Duración del análisis de atributos faciales: {current_time}")
-    doc2.add_paragraph(f"Total de emociones detectadas durante el análisis: {total_emotions}")
-    doc2.add_paragraph(f"Emoción más detectada durante el análisis: {most_detected_emotion}")
+        # Add a table to the document
+        table = doc.add_table(rows=1, cols=3)
+        table.style = 'Table Grid'
 
-    doc.add_paragraph(f"Duration of Facial attribute analysis {current_time}")
-    doc.add_paragraph(f"Total emotions detected during analysis: {total_emotions}")
-    doc.add_paragraph(f"Most detected emotion during analysis: {most_detected_emotion}")
+        # Add document header row
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = translations["Serial"][language]
+        hdr_cells[1].text = translations["Emotion"][language]
+        hdr_cells[2].text = translations["Count"][language]
 
-    # Add a table to the document
-    table = doc.add_table(rows=1, cols=3)
-    spanish_table = doc2.add_table(rows=1, cols=3)
+        # Add data rows
+        serial = 1
+        for emotion, count in analytics_data.items():
+            row_cells = table.add_row().cells
+            row_cells[0].text = str(serial)
+            row_cells[1].text = translations[emotion][language]
+            row_cells[2].text = str(count)
+            serial += 1
 
-    table.style = 'Table Grid'
-    spanish_table.style = "Table Grid"
+        # Save the document
+        doc.save(f"output/analytics-data-{language.lower()}.docx")
 
-    # serial count
-    serial = 1
+        # Create a new Excel workbook and select the active worksheet
+        wb = Workbook()
+        ws = wb.active
 
-    # Add document header row
-    hdr_cells = table.rows[0].cells
-    hdr_cells[0].text = 'Serial'
-    hdr_cells[1].text = 'Emotion'
-    hdr_cells[2].text = 'Count'
+        # Add the table headers
+        ws.append([translations["Facial Attribute Analysis Software v.0.5"][language]])
+        ws.append([translations["Serial"][language], translations["Emotion"][language], translations["Count"][language]])
 
-    # Add document row for spanish
-    shdr_cells = spanish_table.rows[0].cells
-    shdr_cells[0].text = 'De serie'
-    shdr_cells[1].text = 'Emoción'
-    shdr_cells[2].text = 'Contar'
+        # Add data rows
+        serial = 1
+        for emotion, count in analytics_data.items():
+            ws.append([serial, translations[emotion][language], count])
+            serial += 1
 
-    # Create a new Excel workbook and select the active worksheet
-    wb = Workbook()
-    ws = wb.active
+        # Add data for the chart in Excel
+        chart = BarChart()
+        chart.title = translations["Emotion Counts"][language]
+        chart.y_axis.title = translations["Count"][language]
+        chart.x_axis.title = translations["Emotion"][language]
 
-    # Add the table headers
-    ws.append(["Facial Attribute Analysis Data"])
-    ws.append(["Serial", "Emotion", "Count"])
+        data = Reference(ws, min_col=3, min_row=2, max_row=2 + len(analytics_data))
+        categories = Reference(ws, min_col=2, min_row=3, max_row=2 + len(analytics_data))
 
-    # Add data rows
-    for emotion, count in analytics_data.items():
+        chart.add_data(data, titles_from_data=True)
+        chart.set_categories(categories)
+        chart.shape = 4
+        ws.add_chart(chart, "E5")
 
-        srow_cells = spanish_table.add_row().cells
-        srow_cells[0].text = str(serial)
-        srow_cells[1].text = emotion
-        srow_cells[2].text = str(count)
-
-        row_cells = table.add_row().cells
-        row_cells[0].text = str(serial)
-        row_cells[1].text = emotion
-        row_cells[2].text = str(count)
-
-        # for excel
-        ws.append([serial, emotion, count])
-        serial += 1
-
-    # Add data for the chart in Excel
-    chart = BarChart()
-    chart.title = "Emotion Counts"
-    chart.y_axis.title = 'Count'
-    chart.x_axis.title = 'Emotion'
-
-    data = Reference(ws, min_col=3, min_row=3, max_row=3 + len(analytics_data) - 1)
-    categories = Reference(ws, min_col=2, min_row=4, max_row=3 + len(analytics_data))
-
-    chart.add_data(data, titles_from_data=True)
-    chart.set_categories(categories)
-    chart.shape = 4
-    ws.add_chart(chart, "E5")
-
-    # Save the document
-    doc2.save("output/datos-analíticos.docx")
-    doc.save("output/analytics-data.docx")
-
-    # Save the sheet
-    wb.save("output/analytics-data.xlsx")
+        # Save the workbook
+        wb.save(f"output/analytics-data-{language.lower()}.xlsx")
 
     frame_saved = False
-    messagebox.showinfo("Export Data", "Analysis exported in Docx and Xslx!")
+    messagebox.showinfo(translations["Export Data"][language_str.get()], translations["Analysis exported in Docx and Xslx!"][language_str.get()])
 
 
 def analyze_video(source):
