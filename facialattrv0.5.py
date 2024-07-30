@@ -182,6 +182,7 @@ def export_data():
         chart.title = translations["Emotion Counts"][language]
         chart.y_axis.title = translations["Count"][language]
         chart.x_axis.title = translations["Emotion"][language]
+        chart.legend = None  # Disable the legend
 
         data = Reference(ws, min_col=3, min_row=2, max_row=2 + len(analytics_data))
         categories = Reference(ws, min_col=2, min_row=3, max_row=2 + len(analytics_data))
