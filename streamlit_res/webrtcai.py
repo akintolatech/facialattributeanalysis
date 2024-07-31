@@ -1,3 +1,8 @@
+"""
+    Basic streamlit web rtc with facial analysis
+    All rights reserved Akintola Technologies
+"""
+
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, RTCConfiguration, VideoProcessorBase
 import av
