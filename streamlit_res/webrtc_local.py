@@ -2,6 +2,11 @@ import streamlit as st
 import cv2
 import numpy as np
 
+"""
+    Basic streamlit web rtc with facial analysis
+    All rights reserved Akintola Technologies
+"""
+
 # Define a function to capture video from the webcam
 def video_capture():
     cap = cv2.VideoCapture(0)  # Capture video from the default webcam (index 0)
