@@ -15,7 +15,7 @@ def video_capture():
             break
 
         # Apply some processing to the frame (example: brighten the image)
-        matrix = np.ones(frame.shape, dtype="uint8") * 50
+        matrix = np.ones(frame.shape, dtype="uint8") * 100
         b_frame = cv2.add(frame, matrix)
 
         # Display the processed frame in Streamlit
@@ -30,4 +30,14 @@ def video_capture():
 st.title("Facial Attribute Analysis Software")
 st.write("Local Version")
 
-video_capture()
+# Initialize session state for capturing
+if 'capturing' not in st.session_state:
+    st.session_state['capturing'] = False
+
+# Define start and stop buttons
+if st.button('Start'):
+    st.session_state['capturing'] = True
+    video_capture()
+
+if st.button('Stop'):
+    st.session_state['capturing'] = False
