@@ -7,6 +7,7 @@ import numpy as np
     All rights reserved Akintola Technologies
 """
 
+
 # Define a function to capture video from the webcam
 def video_capture():
     cap = cv2.VideoCapture(0)  # Capture video from the default webcam (index 0)
@@ -31,6 +32,7 @@ def video_capture():
 
     cap.release()
     cv2.destroyAllWindows()
+
 
 st.title("Facial Attribute Analysis Software")
 st.write("Local Version")
