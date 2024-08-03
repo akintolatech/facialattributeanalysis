@@ -3,6 +3,12 @@ import cv2
 from deepface import DeepFace
 import numpy as np
 
+# Export
+import docx
+from docx import Document
+from openpyxl import Workbook
+# from openpyxl.drawing.image import Image as ExcelImage
+from openpyxl.chart import BarChart, Reference
 
 # Custom CSS to change the width of the Streamlit app
 custom_css = """
@@ -37,6 +43,42 @@ if 'emotion_counts' not in st.session_state:
     }
 
 
+def export_data():
+    # Update emotion count
+    analytics_data = st.session_state.emotion_counts
+
+    wb = Workbook()
+    ws = wb.active
+
+    # Add the table headers
+    ws.append(["Serial", "Emotion", "Count"])
+
+    # Add data rows
+    serial = 1
+    for emotion, count in analytics_data.items():
+        ws.append([serial, emotion, count])
+        serial += 1
+
+    # Add data for the chart in Excel
+    chart = BarChart()
+    chart.title = "Emotion Counts"
+    chart.y_axis.title = "Count"
+    chart.x_axis.title = "Emotion"
+    chart.legend = None  # Disable the legend
+
+    data = Reference(ws, min_col=3, min_row=1, max_row=1 + len(analytics_data))
+    categories = Reference(ws, min_col=2, min_row=2, max_row=1 + len(analytics_data))
+
+    chart.add_data(data, titles_from_data=True)
+    chart.set_categories(categories)
+    chart.shape = 4
+    ws.add_chart(chart, "E5")
+
+    # Save the workbook
+    wb.save("results/analytics-data.xlsx")
+    st.success("Data exported successfully to 'analytics-data.xlsx'")
+
+
 # Define a function to capture video from the webcam
 def video_capture():
     cap = cv2.VideoCapture(0)  # Capture video from the default webcam (index 0)
@@ -52,6 +94,14 @@ def video_capture():
 
     # Load the face cascade classifier
     face_cascade = cv2.CascadeClassifier(cv2.data.haarcascades + cascade_file)
+
+    # Get the frame width and height
+    frame_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
+    frame_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+
+    # Define the codec and create VideoWriter object
+    fourcc = cv2.VideoWriter_fourcc(*'mp4v')
+    out = cv2.VideoWriter('results/analysed_vid.mp4', fourcc, 10.0, (frame_width, frame_height))
 
     while st.session_state.capturing:
         ret, frame = cap.read()
@@ -90,9 +140,11 @@ def video_capture():
                 st.write("Error in analyzing face region:", e)
                 pass
 
+        # Write the processed frame to the video file
+        out.write(frame)
+
         # Display the processed frame in Streamlit
         stframe.image(frame, channels="BGR")
-
 
         # Update the chart dynamically
         chart_placeholder.bar_chart(st.session_state.emotion_counts)
@@ -101,10 +153,11 @@ def video_capture():
             break
 
     cap.release()
+    out.release()
     cv2.destroyAllWindows()
 
 
-st.title("Facial Attribute Analysis Software")
+st.title("Facial Attribute Analysis Software v0.1")
 st.write("A Facial Attribute Recognition App with 95% Confidence rate")
 
 # Initialize session state for capturing
@@ -127,7 +180,7 @@ with col3:
 
     with col5:
         # Define start and stop buttons
-        if st.button('Start Live Analysis'):
+        if st.button('Start and Record  Live Analysis'):
             st.session_state.capturing = True
             video_capture()
 
@@ -135,7 +188,7 @@ with col3:
     #     if st.button('Export Data Analysis'):
     #         st.session_state.capturing = False
 
-
 with col4:
     if st.button('Export Data Analysis'):
-        print("wored")
+        st.session_state.capturing = True
+        export_data()
