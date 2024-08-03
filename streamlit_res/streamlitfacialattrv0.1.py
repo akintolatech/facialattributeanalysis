@@ -3,6 +3,27 @@ import cv2
 from deepface import DeepFace
 import numpy as np
 
+
+# Custom CSS to change the width of the Streamlit app
+custom_css = """
+<style>
+    .main .block-container {
+        max-width: 1200px;
+        padding-left: 1rem;
+        padding-right: 1rem;
+        
+    }
+    
+    .chart-wrapper .fit-x .fit-y {
+        width:100% !important;
+        height:100% !important;
+    }
+</style>
+"""
+
+# Inject custom CSS
+st.markdown(custom_css, unsafe_allow_html=True)
+
 # Initialize emotion count dictionary
 if 'emotion_counts' not in st.session_state:
     st.session_state.emotion_counts = {
@@ -20,8 +41,11 @@ if 'emotion_counts' not in st.session_state:
 def video_capture():
     cap = cv2.VideoCapture(0)  # Capture video from the default webcam (index 0)
 
-    stframe = st.empty()
-    chart_placeholder = st.empty()
+    with col1:
+        stframe = st.empty()
+
+    with col2:
+        chart_placeholder = st.empty()
 
     # Get the absolute path to the Haar cascade file
     cascade_file = 'haarcascade_frontalface_default.xml'
@@ -69,6 +93,7 @@ def video_capture():
         # Display the processed frame in Streamlit
         stframe.image(frame, channels="BGR")
 
+
         # Update the chart dynamically
         chart_placeholder.bar_chart(st.session_state.emotion_counts)
 
@@ -80,7 +105,7 @@ def video_capture():
 
 
 st.title("Facial Attribute Analysis Software")
-st.write("Local Version")
+st.write("A Facial Attribute Recognition App with 95% Confidence rate")
 
 # Initialize session state for capturing
 if 'capturing' not in st.session_state:
@@ -89,10 +114,28 @@ if 'capturing' not in st.session_state:
 # Display the emotion counts
 # st.line_chart(st.session_state.emotion_counts)
 
-# Define start and stop buttons
-if st.button('Start'):
-    st.session_state.capturing = True
-    video_capture()
 
-if st.button('Stop'):
-    st.session_state.capturing = False
+col1, col2 = st.columns(2)
+
+# col1.write("this is col1")
+# col2.write("this is col2")
+
+col3, col4 = st.columns(2)
+
+with col3:
+    col5, col6 = st.columns(2)
+
+    with col5:
+        # Define start and stop buttons
+        if st.button('Start Live Analysis'):
+            st.session_state.capturing = True
+            video_capture()
+
+    # with col6:
+    #     if st.button('Export Data Analysis'):
+    #         st.session_state.capturing = False
+
+
+with col4:
+    if st.button('Export Data Analysis'):
+        print("wored")
