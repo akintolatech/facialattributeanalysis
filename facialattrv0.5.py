@@ -477,7 +477,7 @@ max_emotion = Label(
     bg=_2nd_bgcolor,
     font=('Arial bold', 10),
 )
-max_emotion.place(x=400, y=490)
+max_emotion.place(x=460, y=490)
 
 # Combobox for language reference
 app_info = Label(
