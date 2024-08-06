@@ -53,7 +53,7 @@ option = st.selectbox(
 st.write(f"You selected {option}")
 
 # video
-video_file = open("../test5.mp4", "rb")
+video_file = open("../../test5.mp4", "rb")
 video_bytes = video_file.read()
 
 st.video(video_bytes)

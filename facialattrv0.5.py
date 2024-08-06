@@ -88,9 +88,9 @@ translations = {
     "Analysis exported in Docx and Xslx!": {"English": "Analysis exported in Docx and Xslx!",
                                             "Spanish": "¡Análisis exportado en Docx y Xslx!"},
     "Serial": {"English": "Serial", "Spanish": "De serie"},
-    "Emotion": {"English": "Emotion", "Spanish": "Emotionales"},
-    "Count": {"English": "Count", "Spanish": "Countas"},
-    "Emotion Counts": {"English": "Emotion Counts", "Spanish": "Emotionales Countas"},
+    "Emotion": {"English": "Emotion", "Spanish": "Emoción"},
+    "Count": {"English": "Count", "Spanish": "contar"},
+    "Emotion Counts": {"English": "Emotion Counts", "Spanish": "La emoción cuenta"},
     "Export Data": {"English": "Export Data", "Spanish": "Export Dataois"},
 }
 
